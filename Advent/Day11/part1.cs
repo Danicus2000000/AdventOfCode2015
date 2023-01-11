@@ -23,17 +23,61 @@ namespace Day11
 {
     internal static class part1
     {
-        internal static void solve(string puzzleData) 
+        internal static void solve(string puzzleData)
         {
-            Stopwatch watch=new Stopwatch();
+            Stopwatch watch = new Stopwatch();
             watch.Start();
-            bool validPassword = false;
-            while(!validPassword) 
+            string password = puzzleData;
+            while (!IsValidPassword(password))
             {
-                char[] puzzleChar=puzzleData.ToCharArray();
-
+                password = IncrementPassword(password);
             }
             watch.Stop();
+            Console.WriteLine("New password is: " + password+" completed in "+watch.ElapsedMilliseconds+"ms");
+            part2.solve(password);//starts part 2
+        }
+        internal static bool IsValidPassword(string password)
+        {
+            bool hasStraight = false;
+            bool hasInvalidChars = false;
+            bool hasPairs = false;
+            for (int i = 0; i < password.Length - 2; i++)
+            {
+                if (password[i] == password[i + 1] - 1 && password[i] == password[i + 2] - 2)
+                {
+                    hasStraight = true;
+                }
+            }
+            hasInvalidChars = password.Any(c => "iol".Contains(c));
+            int pairCount = 0;
+            for (int i = 0; i < password.Length - 1; i++)
+            {
+                if (password[i] == password[i + 1])
+                {
+                    pairCount++;
+                    i++;
+                }
+            }
+            hasPairs = pairCount >= 2;
+            return hasStraight && !hasInvalidChars && hasPairs;
+        }
+
+        internal static string IncrementPassword(string password)
+        {
+            char[] chars = password.ToCharArray();
+            for (int i = chars.Length - 1; i >= 0; i--)
+            {
+                if (chars[i] != 'z')
+                {
+                    chars[i]++;
+                    break;
+                }
+                else
+                {
+                    chars[i] = 'a';
+                }
+            }
+            return new string(chars);
         }
     }
 }
