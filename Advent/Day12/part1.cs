@@ -24,7 +24,7 @@ namespace Day12
             JToken json = JToken.Parse(puzzleData);
             int result = sum(json);
             watch.Stop();
-            Console.WriteLine("The total of numbers in the json file is " + result);
+            Console.WriteLine("The total of numbers in the json file is " + result+" completed in "+watch.ElapsedMilliseconds+"ms");
         }
         internal static int sum(JToken json)
         {

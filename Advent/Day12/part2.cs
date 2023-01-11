@@ -8,7 +8,6 @@ Ignore any object (and all of its children) which has any property with the valu
 [1,"red",5] has a sum of 6, because "red" in an array has no effect.*/
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
-using System.Linq;
 namespace Day12
 {
     internal static class part2
@@ -20,7 +19,7 @@ namespace Day12
             JToken json = JToken.Parse(puzzleData);
             int result = sum(json);
             watch.Stop();
-            Console.WriteLine("The total of numbers in the json file excluding those with parameter red is " + result);
+            Console.WriteLine("The total of numbers in the json file excluding those with parameter red is " + result + " completed in " + watch.ElapsedMilliseconds + "ms");
         }
         internal static int sum(JToken json)
         {
