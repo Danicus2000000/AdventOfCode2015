@@ -13,61 +13,58 @@ namespace Day14
 {
     internal static class part2
     {
-        public class Reindeer
-        {
-            public string Name { get; set; }
-            public int Speed { get; set; }
-            public int FlyTime { get; set; }
-            public int RestTime { get; set; }
-            public int Points { get; set; } // added property to hold the points
-            public int Distance { get; set; }
-            public int Remaining { get; set; }
-            public int totalTime { get; set; }
-            public int state { get; set; }
-            public int FlyCycle { get; set; }
-        }
         internal static void solve(string puzzleData)
         {
             Stopwatch watch = new Stopwatch();
             watch.Start();
-            Reindeer[] reindeer = new Reindeer[] {
-            new Reindeer { Name = "Comet", Speed = 14, FlyTime = 10, RestTime = 127 },
-            new Reindeer { Name = "Dancer", Speed = 16, FlyTime = 11, RestTime = 162 }
-        };
+            int winningPoints = 2503;
 
-            int raceTime = 2503;
+            string[] input = puzzleData.Split("\r\n");
 
-            // simulate the race
-            for (int i = 1; i <= raceTime; i++)
+            var reindeer = input.Select(line =>
             {
-                // update the distance and state for each reindeer
-                foreach (var r in reindeer)
+                string[] parts = line.Split(' ');
+                return new
                 {
-                    if (r.state < r.FlyTime)
+                    Name = parts[0],
+                    Speed = int.Parse(parts[3]),
+                    Time = int.Parse(parts[6]),
+                    Rest = int.Parse(parts[13])
+                };
+            }).ToArray();
+
+            int maxDistance = 0;
+            int[] scores = new int[reindeer.Length];
+            for (int t = 1; t <= winningPoints; t++)
+            {
+                int[] distances = new int[reindeer.Length];
+                for (int i = 0; i < reindeer.Length; i++)
+                {
+                    int fullCycles = t / (reindeer[i].Time + reindeer[i].Rest);
+                    int remainingTime = t % (reindeer[i].Time + reindeer[i].Rest);
+                    int traveled = fullCycles * reindeer[i].Speed * reindeer[i].Time;
+                    if (remainingTime > reindeer[i].Time)
                     {
-                        r.Distance += r.Speed;
-                        r.state++;
-                    }
-                    else if (r.state == r.FlyTime + r.RestTime)
-                    {
-                        r.state = 0;
-                        r.FlyCycle++;
+                        traveled += reindeer[i].Speed * reindeer[i].Time;
                     }
                     else
                     {
-                        r.state++;
+                        traveled += reindeer[i].Speed * remainingTime;
                     }
-                    if (r.FlyCycle > 0)
+                    distances[i] = traveled;
+                    maxDistance = Math.Max(maxDistance, traveled);
+                }
+
+                for (int i = 0; i < reindeer.Length; i++)
+                {
+                    if (distances[i] == maxDistance)
                     {
-                        r.Points += r.FlyCycle;
+                        scores[i]++;
                     }
                 }
-                var max = reindeer.OrderByDescending(x => x.Distance).First();
-                max.Points++;
             }
-            int maxPoints = reindeer.Max(r => r.Points);
             watch.Stop();
-            Console.WriteLine("The winning reindeer has {0} points.", maxPoints);
+            Console.WriteLine("The winning reindeer has {0} points. Calculated in {1} ms",scores.Max(),watch.ElapsedMilliseconds);
         }
     }
 }

@@ -15,23 +15,20 @@ using System.Diagnostics;
 
 namespace Day14
 {
-    public class Reindeer
-    {
-        public string Name { get; set; }
-        public int Speed { get; set; }
-        public int FlyTime { get; set; }
-        public int RestTime { get; set; }
-    }
     internal static class part1
     {
         internal static void solve(string puzzleData)
         {
             Stopwatch watch = new Stopwatch();
             watch.Start();
-            Reindeer[] reindeer = new Reindeer[] {
-            new Reindeer { Name = "Comet", Speed = 14, FlyTime = 10, RestTime = 127 },
-            new Reindeer { Name = "Dancer", Speed = 16, FlyTime = 11, RestTime = 162 }
-        };
+            string[] inputLines = puzzleData.Split("\r\n");
+            List<Reindeer> reindeer = new List<Reindeer>();
+            //parse input 
+            foreach (string line in inputLines)
+            {
+                string[] s = line.Split(" ");
+                reindeer.Add(new Reindeer(s[0], int.Parse(s[3]), int.Parse(s[6]), int.Parse(s[13])));
+            }
 
             int raceTime = 2503;
             int maxDistance = 0;
@@ -43,17 +40,30 @@ namespace Day14
                 int time = 0;
                 while (time < raceTime)
                 {
-                    int flyDistance = r.Speed * Math.Min(r.FlyTime, raceTime - time);
+                    int flyDistance = r.speed * Math.Min(r.flyTime, raceTime - time);
                     distance += flyDistance;
-                    time += r.FlyTime;
-
-                    int restDistance = 0;
-                    time += r.RestTime;
+                    time += r.flyTime;
+                    time += r.restTime;
                 }
                 maxDistance = Math.Max(maxDistance, distance);
             }
             watch.Stop();
-            Console.WriteLine("The winning reindeer traveled a distance of {0} km.", maxDistance);
+            Console.WriteLine("The winning reindeer traveled a distance of {0} km. Calculated in {1} ms", maxDistance,watch.ElapsedMilliseconds);
+        }
+    }
+    internal class Reindeer
+    {
+        public string name;
+        public int speed;
+        public int flyTime;
+        public int restTime;
+
+        public Reindeer(string name, int speed, int flyTime, int restTime)
+        {
+            this.name = name;
+            this.speed = speed;
+            this.flyTime = flyTime;
+            this.restTime = restTime;
         }
     }
 }
