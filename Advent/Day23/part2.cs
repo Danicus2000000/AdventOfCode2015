@@ -57,7 +57,6 @@ namespace Day23
             }
             watch.Stop();
             Console.WriteLine("The value in register b on completion (when a starts as 1) is {0}. Completed in {1}ms", registers[1], watch.ElapsedMilliseconds);
-            watch.Stop();
         }
     }
 }
