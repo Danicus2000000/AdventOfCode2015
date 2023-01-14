@@ -109,110 +109,183 @@ namespace Day22
 {
     internal static class part1
     {
-        static int playerHP = 50;
-        static int bossHP = 58;
-        static int bossDamage = 9;
-        static int turns = 20;
-        static int minMana = int.MaxValue;
-        static HashSet<string> visitedStates = new HashSet<string>();
-        static Queue<GameState> queue = new Queue<GameState>();
+        static int bossH = 58;
+        static int bossAt = 9;
+
+        static int costMissile = 53;
+        static int costDrain = 73;
+        static int costPoison = 173;
+        static int costShield = 113;
+        static int costRecharge = 229;
+
+        const int heroH = 50;
+        const int heroMana = 500;
+        static int heroAr = 0;
+        static int cost = 0;
+
+        static int poison = 0;
+        static int recharge = 0;
+        static int shield = 0;
+
+        static int boss;
+        static int hero;
+        static int mana;
+
+        static Random rand = new Random();
         internal static void solve(string puzzleData)
         {
             Stopwatch watch = new Stopwatch();
             watch.Start();
-            queue.Enqueue(new GameState(playerHP, 500, bossHP, 0, 0, 0, 0, turns));
-            while (queue.Count > 0)
+            int answer = int.MaxValue;
+
+            for (int i = 0; i < 3000000; i++)
             {
-                GameState current = queue.Dequeue();
-
-                if (visitedStates.Contains(current.ToString()))
+                if (Fight())
                 {
-                    continue;
+                    answer = Math.Min(answer, cost);
                 }
-                visitedStates.Add(current.ToString());
-
-                if (current.bossHP <= 0)
-                {
-                    minMana = current.playerMana;
-                    break;
-                }
-                if (current.playerHP <= 0 || current.remainingTurns <= 0)
-                {
-                    continue;
-                }
-                // Magic Missile
-                if (current.playerMana >= 53)
-                {
-                    queue.Enqueue(new GameState(current.playerHP, current.playerMana - 53, current.bossHP - 4, current.playerArmor, current.shieldTimer, current.poisonTimer, current.rechargeTimer, current.remainingTurns - 1));
-                }
-
-                // Drain
-                if (current.playerMana >= 73)
-                {
-                    queue.Enqueue(new GameState(current.playerHP + 2, current.playerMana - 73, current.bossHP - 2, current.playerArmor, current.shieldTimer, current.poisonTimer, current.rechargeTimer, current.remainingTurns - 1));
-                }
-
-                // Shield
-                if (current.playerMana >= 113 && current.shieldTimer <= 0)
-                {
-                    queue.Enqueue(new GameState(current.playerHP, current.playerMana - 113, current.bossHP, current.playerArmor + 7, 6, current.poisonTimer, current.rechargeTimer, current.remainingTurns - 1));
-                }
-
-                // Poison
-                if (current.playerMana >= 173 && current.poisonTimer <= 0)
-                {
-                    queue.Enqueue(new GameState(current.playerHP, current.playerMana - 173, current.bossHP - 3, current.playerArmor, current.shieldTimer, 6, current.rechargeTimer, current.remainingTurns - 1));
-                }
-
-                // Recharge
-                if (current.playerMana >= 229 && current.rechargeTimer <= 0)
-                {
-                    queue.Enqueue(new GameState(current.playerHP, current.playerMana - 229, current.bossHP, current.playerArmor, current.shieldTimer, current.poisonTimer, 5, current.remainingTurns - 1));
-                }
-
-                // Boss' turn
-                int damage = bossDamage - current.playerArmor;
-                if (damage < 1)
-                {
-                    damage = 1;
-                }
-
-                queue.Enqueue(new GameState(current.playerHP - damage, current.playerMana, current.bossHP, current.playerArmor, current.shieldTimer > 0 ? current.shieldTimer - 1 : 0, current.poisonTimer > 0 ? current.poisonTimer - 1 : 0, current.rechargeTimer > 0 ? current.rechargeTimer - 1 : 0, current.remainingTurns - 1));
             }
             watch.Stop();
-            if (minMana != int.MaxValue)
+            if (answer != int.MaxValue)
             {
-                Console.WriteLine("The minimum mana spent to win is {0}. Completed in {1}ms", minMana, watch.ElapsedMilliseconds);
+                Console.WriteLine("The minimum mana spent to win is {0}. Completed in {1}ms", answer, watch.ElapsedMilliseconds);
             }
             else
             {
                 Console.WriteLine("Player can't win!");
             }
         }
-        class GameState
+        enum ActionType { Nothing, Missile, Drain, Poison, Shield, Recharge }
+        static ActionType Choose()
         {
-            public int playerHP;
-            public int playerMana;
-            public int bossHP;
-            public int playerArmor;
-            public int shieldTimer;
-            public int poisonTimer;
-            public int rechargeTimer;
-            public int remainingTurns;
-            public GameState(int playerHP, int playerMana, int bossHP, int playerArmor, int shieldTimer, int poisonTimer, int rechargeTimer, int remainingTurns)
+            if (mana < costPoison)
             {
-                this.playerHP = playerHP;
-                this.playerMana = playerMana;
-                this.bossHP = bossHP;
-                this.playerArmor = playerArmor;
-                this.shieldTimer = shieldTimer;
-                this.poisonTimer = poisonTimer;
-                this.rechargeTimer = rechargeTimer;
-                this.remainingTurns = remainingTurns;
+                return ActionType.Nothing;
             }
-            public override string ToString()
+
+            while (true)
             {
-                return $"{playerHP},{playerMana},{bossHP},{playerArmor},{shieldTimer},{poisonTimer},{rechargeTimer},{remainingTurns}";
+                int next = rand.Next(5);
+                if (next == 0 && mana >= costMissile)
+                {
+                    return ActionType.Missile;
+                }
+                else if (next == 1 && mana >= costDrain)
+                {
+                    return ActionType.Drain;
+                }
+                else if (next == 2 && mana >= costPoison)
+                {
+                    return ActionType.Poison;
+                }
+                else if (next == 3 && mana >= costRecharge)
+                {
+                    return ActionType.Recharge;
+                }
+                else if (next == 4 && mana >= costShield)
+                {
+                    return ActionType.Shield;
+                }
+            }
+        }
+        static bool Fight()
+        {
+            bool turn = true;
+            ActionType type = ActionType.Nothing;
+
+            hero = heroH;
+            boss = bossH;
+            mana = heroMana;
+            cost = 0;
+            poison = 0;
+            recharge = 0;
+            shield = 0;
+
+            while (true)
+            {
+                if (poison > 0)
+                {
+                    poison--;
+                    boss -= 3;
+                }
+
+                if (recharge > 0)
+                {
+                    recharge--;
+                    mana += 101;
+                }
+
+                if (shield > 0)
+                {
+                    shield--;
+                }
+                if (shield == 0)
+                {
+                    heroAr = 0;
+                }
+
+                if (boss <= 0)
+                {
+                    return true;
+                }
+
+                if (hero <= 0)
+                {
+                    return false;
+                }
+
+                if (turn)
+                {
+                    if (hero <= 0)
+                    {
+                        return false;
+                    }
+
+                    type = Choose();
+                    if (type == ActionType.Nothing)
+                    {
+                        return false;
+                    }
+
+                    if (type == ActionType.Drain)
+                    {
+                        boss -= 2;
+                        hero += 2;
+                        cost += costDrain;
+                        mana -= costDrain;
+                    }
+                    else if (type == ActionType.Missile)
+                    {
+                        boss -= 4;
+                        cost += costMissile;
+                        mana -= costMissile;
+                    }
+                    else if (type == ActionType.Poison)
+                    {
+                        poison = 6;
+                        cost += costPoison;
+                        mana -= costPoison;
+                    }
+                    else if (type == ActionType.Recharge)
+                    {
+                        recharge = 5;
+                        cost += costRecharge;
+                        mana -= costRecharge;
+                    }
+                    else if (type == ActionType.Shield)
+                    {
+                        shield = 6;
+                        heroAr = 7;
+                        cost += costShield;
+                        mana -= costShield;
+                    }
+                }
+                else
+                {
+                    hero -= Math.Max(1, bossAt - heroAr);
+                }
+
+                turn = !turn;
             }
         }
     }
