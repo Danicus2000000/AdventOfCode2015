@@ -109,61 +109,110 @@ namespace Day22
 {
     internal static class part1
     {
+        static int playerHP = 50;
+        static int bossHP = 58;
+        static int bossDamage = 9;
+        static int turns = 20;
+        static int minMana = int.MaxValue;
+        static HashSet<string> visitedStates = new HashSet<string>();
+        static Queue<GameState> queue = new Queue<GameState>();
         internal static void solve(string puzzleData)
         {
             Stopwatch watch = new Stopwatch();
             watch.Start();
-            int playerHitPoints = 50;
-            int playerMana = 500;
-            int bossHitPoints = 58;
-            int minMana = int.MaxValue;
-            Queue<GameState> queue = new Queue<GameState>();
-            queue.Enqueue(new GameState(playerHitPoints, playerMana, bossHitPoints, 0));
-
+            queue.Enqueue(new GameState(playerHP, 500, bossHP, 0, 0, 0, 0, turns));
             while (queue.Count > 0)
             {
-                GameState currentState = queue.Dequeue();
+                GameState current = queue.Dequeue();
 
-                if (currentState.BossHitPoints <= 0)
-                {
-                    Console.WriteLine(currentState.ManaSpent);
-                    return;
-                }
-
-                if (currentState.PlayerHitPoints <= 0)
+                if (visitedStates.Contains(current.ToString()))
                 {
                     continue;
                 }
+                visitedStates.Add(current.ToString());
 
-                // Player Turn
-                queue.Enqueue(new GameState(currentState.PlayerHitPoints - 1, currentState.PlayerMana - 53, currentState.BossHitPoints - 4, currentState.ManaSpent + 53));
-                queue.Enqueue(new GameState(currentState.PlayerHitPoints - 1, currentState.PlayerMana - 73, currentState.BossHitPoints - 2, currentState.ManaSpent + 73));
-                queue.Enqueue(new GameState(currentState.PlayerHitPoints - 1, currentState.PlayerMana - 113, currentState.BossHitPoints - currentState.BossDamage, currentState.ManaSpent + 113));
-                queue.Enqueue(new GameState(currentState.PlayerHitPoints - 1, currentState.PlayerMana - 173, currentState.BossHitPoints, currentState.ManaSpent + 173));
-                queue.Enqueue(new GameState(currentState.PlayerHitPoints - 1, currentState.PlayerMana - 229, currentState.BossHitPoints, currentState.ManaSpent + 229));
+                if (current.bossHP <= 0)
+                {
+                    minMana = current.playerMana;
+                    break;
+                }
+                if (current.playerHP <= 0 || current.remainingTurns <= 0)
+                {
+                    continue;
+                }
+                // Magic Missile
+                if (current.playerMana >= 53)
+                {
+                    queue.Enqueue(new GameState(current.playerHP, current.playerMana - 53, current.bossHP - 4, current.playerArmor, current.shieldTimer, current.poisonTimer, current.rechargeTimer, current.remainingTurns - 1));
+                }
 
-                // Boss Turn
-                queue.Enqueue(new GameState(currentState.PlayerHitPoints - currentState.BossDamage, currentState.PlayerMana, currentState.BossHitPoints, currentState.ManaSpent));
+                // Drain
+                if (current.playerMana >= 73)
+                {
+                    queue.Enqueue(new GameState(current.playerHP + 2, current.playerMana - 73, current.bossHP - 2, current.playerArmor, current.shieldTimer, current.poisonTimer, current.rechargeTimer, current.remainingTurns - 1));
+                }
+
+                // Shield
+                if (current.playerMana >= 113 && current.shieldTimer <= 0)
+                {
+                    queue.Enqueue(new GameState(current.playerHP, current.playerMana - 113, current.bossHP, current.playerArmor + 7, 6, current.poisonTimer, current.rechargeTimer, current.remainingTurns - 1));
+                }
+
+                // Poison
+                if (current.playerMana >= 173 && current.poisonTimer <= 0)
+                {
+                    queue.Enqueue(new GameState(current.playerHP, current.playerMana - 173, current.bossHP - 3, current.playerArmor, current.shieldTimer, 6, current.rechargeTimer, current.remainingTurns - 1));
+                }
+
+                // Recharge
+                if (current.playerMana >= 229 && current.rechargeTimer <= 0)
+                {
+                    queue.Enqueue(new GameState(current.playerHP, current.playerMana - 229, current.bossHP, current.playerArmor, current.shieldTimer, current.poisonTimer, 5, current.remainingTurns - 1));
+                }
+
+                // Boss' turn
+                int damage = bossDamage - current.playerArmor;
+                if (damage < 1)
+                {
+                    damage = 1;
+                }
+
+                queue.Enqueue(new GameState(current.playerHP - damage, current.playerMana, current.bossHP, current.playerArmor, current.shieldTimer > 0 ? current.shieldTimer - 1 : 0, current.poisonTimer > 0 ? current.poisonTimer - 1 : 0, current.rechargeTimer > 0 ? current.rechargeTimer - 1 : 0, current.remainingTurns - 1));
             }
             watch.Stop();
-            Console.WriteLine("The minimum mana spent to win is {0}. Completed in {1}ms", minMana, watch.ElapsedMilliseconds);
+            if (minMana != int.MaxValue)
+            {
+                Console.WriteLine("The minimum mana spent to win is {0}. Completed in {1}ms", minMana, watch.ElapsedMilliseconds);
+            }
+            else
+            {
+                Console.WriteLine("Player can't win!");
+            }
         }
-
         class GameState
         {
-            public int PlayerHitPoints { get; }
-            public int PlayerMana { get; }
-            public int BossHitPoints { get; }
-            public int BossDamage { get; }
-            public int ManaSpent { get; }
-
-            public GameState(int playerHitPoints, int playerMana, int bossHitPoints, int manaSpent)
+            public int playerHP;
+            public int playerMana;
+            public int bossHP;
+            public int playerArmor;
+            public int shieldTimer;
+            public int poisonTimer;
+            public int rechargeTimer;
+            public int remainingTurns;
+            public GameState(int playerHP, int playerMana, int bossHP, int playerArmor, int shieldTimer, int poisonTimer, int rechargeTimer, int remainingTurns)
             {
-                PlayerHitPoints = playerHitPoints;
-                PlayerMana = playerMana;
-                BossHitPoints = bossHitPoints;
-                BossDamage = 9;
-                ManaSpent = manaSpent;
+                this.playerHP = playerHP;
+                this.playerMana = playerMana;
+                this.bossHP = bossHP;
+                this.playerArmor = playerArmor;
+                this.shieldTimer = shieldTimer;
+                this.poisonTimer = poisonTimer;
+                this.rechargeTimer = rechargeTimer;
+                this.remainingTurns = remainingTurns;
+            }
+            public override string ToString()
+            {
+                return $"{playerHP},{playerMana},{bossHP},{playerArmor},{shieldTimer},{poisonTimer},{rechargeTimer},{remainingTurns}";
             }
         }
     }
